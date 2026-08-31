@@ -14,6 +14,7 @@
  */
 
 #include "dp_command.h"
+#include "parse_dp_sync_mode.h"
 
 #include <functional>
 #include <getopt.h>
@@ -83,7 +84,6 @@ const std::string HELP_MSG_DELETE =
     "  -s  <service-id>                        service id to delete\n";
 constexpr int32_t API_LEVEL = 7;
 constexpr int32_t SYNC_SLEEP_TIME = 10;
-constexpr int32_t BASE = 10;
 constexpr int32_t SUBSCRIBE_SLEEP_TIME = 120;
 const std::string SHORT_OPTIONS = "hd:s:m:t:";
 const struct option LONG_OPTIONS[] = {
@@ -272,7 +272,12 @@ ErrCode DpShellCommand::SyncCommand()
 
     if (result == ERR_OK) {
         SyncOptions syncOption;
-        int64_t mode = strtol(modeStr.c_str(), nullptr, BASE);
+        int64_t mode = 0;
+        if (!modeStr.empty() && !ParseDpSyncMode(modeStr, mode)) {
+            HILOGE("invalid sync mode: %{public}s", modeStr.c_str());
+            resultReceiver_.append(HELP_MSG_SYNC);
+            return OHOS::ERR_INVALID_VALUE;
+        }
         syncOption.SetSyncMode((OHOS::DeviceProfile::SyncMode)mode);
         for (const auto& deviceId : deviceIds) {
             syncOption.AddDevice(deviceId);
